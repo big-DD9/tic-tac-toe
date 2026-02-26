@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <h2 id="status">Player X's Turn</h2>
+
+    <div class="board">
+        {% for i in range(9) %}
+        <div class="cell" onclick="makeMove({{ i }})" id="cell-{{ i }}"></div>
+        {% endfor %}
+    </div>
+
+    <button onclick="resetGame()">Restart</button>
+
+    <script>
+        function makeMove(position) {
+            fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ position: position })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "invalid") {
+                    const cell = document.getElementById("cell-" + position);
+                    cell.innerText = document.getElementById("status").innerText.includes("X") ? "X" : "O";
+                }
+
+                if (data.status === "win") {
+                    document.getElementById("status").innerText = "Player " + data.winner + " Wins!";
+                } else if (data.status === "draw") {
+                    document.getElementById("status").innerText = "It's a Draw!";
+                } else if (data.status === "continue") {
+                    document.getElementById("status").innerText = "Player " + data.player + "'s Turn";
+                }
+            });
+        }
+
+        function resetGame() {
+            fetch("/reset", { method: "POST" })
+            .then(() => {
+                document.querySelectorAll(".cell").forEach(cell => cell.innerText = "");
+                document.getElementById("status").innerText = "Player X's Turn";
+            });
+        }
+    </script>
+</body>
+</html>
