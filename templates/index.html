@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+
+    <div class="controls">
+        <div class="mode-toggle">
+            <label><input type="radio" name="mode" value="pvp" checked onchange="setMode()"> 2 Player</label>
+            <label><input type="radio" name="mode" value="ai" onchange="setMode()"> vs AI</label>
+        </div>
+        <div class="difficulty-toggle" id="difficultyToggle" style="display:none;">
+            <label><input type="radio" name="difficulty" value="easy" onchange="setMode()"> Easy</label>
+            <label><input type="radio" name="difficulty" value="hard" checked onchange="setMode()"> Hard</label>
+        </div>
+    </div>
+
+    <h2 id="status">Player X's Turn</h2>
+
+    <div class="scoreboard">
+        <div class="score-box score-x">X Wins <span id="scoreX">0</span></div>
+        <div class="score-box score-o">O Wins <span id="scoreO">0</span></div>
+        <div class="score-box score-draw">Draws <span id="scoreDraw">0</span></div>
+    </div>
+
+    <div class="board">
+        {% for i in range(9) %}
+        <div class="cell" onclick="makeMove({{ i }})" id="cell-{{ i }}"></div>
+        {% endfor %}
+    </div>
+
+    <button onclick="resetGame()">Restart</button>
+
+    <canvas id="confettiCanvas"></canvas>
+
+    <script>
+        // ---- Scoreboard (persisted in browser) ----
+        const scores = JSON.parse(localStorage.getItem("ttt_scores")) || { X: 0, O: 0, draw: 0 };
+
+        function renderScores() {
+            document.getElementById("scoreX").innerText = scores.X;
+            document.getElementById("scoreO").innerText = scores.O;
+            document.getElementById("scoreDraw").innerText = scores.draw;
+        }
+        renderScores();
+
+        function updateScore(key) {
+            scores[key]++;
+            localStorage.setItem("ttt_scores", JSON.stringify(scores));
+            renderScores();
+        }
+
+        // ---- Mode / difficulty ----
+        function currentMode() {
+            return document.querySelector('input[name="mode"]:checked').value;
+        }
+        function currentDifficulty() {
+            return document.querySelector('input[name="difficulty"]:checked').value;
+        }
+
+        document.querySelectorAll('input[name="mode"]').forEach(el => {
+            el.addEventListener("change", () => {
+                document.getElementById("difficultyToggle").style.display =
+                    currentMode() === "ai" ? "flex" : "none";
+            });
+        });
+
+        function setMode() {
+            fetch("/set_mode", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mode: currentMode(), difficulty: currentDifficulty() })
+            }).then(() => resetGame());
+        }
+
+        // ---- Game logic ----
+        function renderBoard(board) {
+            board.forEach((val, i) => {
+                const cell = document.getElementById("cell-" + i);
+                cell.innerText = val;
+                cell.className = "cell" + (val ? " filled-" + val : "");
+            });
+        }
+
+        function makeMove(position) {
+            fetch("/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ position: position })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "invalid") return;
+
+                renderBoard(data.board);
+
+                if (data.status === "win") {
+                    document.getElementById("status").innerText = "Player " + data.winner + " Wins!";
+                    updateScore(data.winner);
+                    launchConfetti();
+                } else if (data.status === "draw") {
+                    document.getElementById("status").innerText = "It's a Draw!";
+                    updateScore("draw");
+                } else if (data.status === "continue") {
+                    document.getElementById("status").innerText = "Player " + data.player + "'s Turn";
+                }
+            });
+        }
+
+        function resetGame() {
+            fetch("/reset", { method: "POST" })
+            .then(() => {
+                document.querySelectorAll(".cell").forEach(cell => {
+                    cell.innerText = "";
+                    cell.className = "cell";
+                });
+                document.getElementById("status").innerText = "Player X's Turn";
+            });
+        }
+
+        // ---- Confetti (lightweight, no libraries) ----
+        const canvas = document.getElementById("confettiCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        const colors = ["#ff6b6b", "#ffd93d", "#6bcB77", "#4d96ff", "#ff8fab", "#c084fc"];
+
+        function launchConfetti() {
+            const pieces = [];
+            for (let i = 0; i < 150; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: -20 - Math.random() * canvas.height,
+                    size: 6 + Math.random() * 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speedY: 2 + Math.random() * 4,
+                    speedX: -2 + Math.random() * 4,
+                    rotation: Math.random() * 360,
+                    rotSpeed: -6 + Math.random() * 12
+                });
+            }
+
+            let frame = 0;
+            const maxFrames = 150;
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    p.y += p.speedY;
+                    p.x += p.speedX;
+                    p.rotation += p.rotSpeed;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+                frame++;
+                if (frame < maxFrames) {
+                    requestAnimationFrame(animate);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-attachment: fixed;
+    color: #fff;
+}
+
+h1 {
+    font-size: 2.8em;
+    margin-bottom: 5px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.mode-toggle, .difficulty-toggle {
+    display: flex;
+    gap: 20px;
+    background: rgba(255,255,255,0.15);
+    padding: 10px 20px;
+    border-radius: 30px;
+    backdrop-filter: blur(4px);
+}
+
+.mode-toggle label, .difficulty-toggle label {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+#status {
+    font-size: 1.4em;
+    margin: 15px 0;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+}
+
+.scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.score-box {
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 0.95em;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.score-x { background: #ff6b6b; }
+.score-o { background: #4d96ff; }
+.score-draw { background: #ffd93d; color: #333; }
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 8px;
+    justify-content: center;
+    margin: 20px auto;
+}
+
+.cell {
+    background: rgba(255,255,255,0.9);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.cell:hover {
+    transform: scale(1.05);
+    background: #fff;
+}
+
+.cell.filled-X {
+    color: #ff6b6b;
+}
+
+.cell.filled-O {
+    color: #4d96ff;
+}
+
+button {
+    margin-top: 10px;
+    padding: 12px 28px;
+    font-size: 1.1em;
+    font-weight: 600;
+    border: none;
+    border-radius: 30px;
+    background: #ffd93d;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.15s ease;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+#confettiCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 999;
+}
